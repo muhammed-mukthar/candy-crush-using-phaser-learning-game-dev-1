@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mini Candy Crush</title>
+    <style>
+      body {
+        text-align: center;
+        margin: 0;
+      }
+      canvas {
+        display: block;
+        margin: auto;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+  </head>
+  <body>
+    <script>
+      // Game configuration
+      const config = {
+        type: Phaser.AUTO,
+        width: 480,
+        height: 640,
+        backgroundColor: "#ffffff",
+        scene: {
+          preload: preload,
+          create: create,
+          update: update,
+        },
+      };
+
+      const game = new Phaser.Game(config);
+      let grid = [];
+      let gridSize = { rows: 8, cols: 8 };
+      let candyTypes = 4;
+      let tileSize = 60;
+      let selectedTile = null;
+
+      function preload() {
+        this.load.image("candy1", "https://i.imgur.com/qUHNS7p.png"); // Candy 1
+        this.load.image("candy2", "https://i.imgur.com/q4Ywv0w.png"); // Candy 2
+        this.load.image("candy3", "https://i.imgur.com/q9PGyMt.png"); // Candy 3
+        this.load.image("candy4", "https://i.imgur.com/6dCGDXz.png"); // Candy 4
+      }
+
+      function create() {
+        // Create grid of candies
+        for (let row = 0; row < gridSize.rows; row++) {
+          grid[row] = [];
+          for (let col = 0; col < gridSize.cols; col++) {
+            let candyType = Phaser.Math.Between(1, candyTypes);
+            let candy = this.add.image(
+              col * tileSize + tileSize / 2,
+              row * tileSize + tileSize / 2,
+              "candy" + candyType
+            );
+            candy.setInteractive();
+            candy.row = row;
+            candy.col = col;
+            candy.candyType = candyType;
+            candy.on("pointerdown", () => selectCandy(candy));
+            grid[row][col] = candy;
+          }
+        }
+      }
+
+      function selectCandy(candy) {
+        if (selectedTile) {
+          // Swap candies
+          swapCandies(selectedTile, candy);
+          checkMatches();
+          selectedTile = null;
+        } else {
+          selectedTile = candy;
+        }
+      }
+
+      function swapCandies(candy1, candy2) {
+        // Swap positions on the grid
+        let tempType = candy1.candyType;
+        candy1.candyType = candy2.candyType;
+        candy2.candyType = tempType;
+
+        candy1.setTexture("candy" + candy1.candyType);
+        candy2.setTexture("candy" + candy2.candyType);
+      }
+
+      function checkMatches() {
+        let matchedCandies = [];
+
+        // Check rows for matches
+        for (let row = 0; row < gridSize.rows; row++) {
+          for (let col = 0; col < gridSize.cols - 2; col++) {
+            if (
+              grid[row][col].candyType === grid[row][col + 1].candyType &&
+              grid[row][col].candyType === grid[row][col + 2].candyType
+            ) {
+              matchedCandies.push(
+                grid[row][col],
+                grid[row][col + 1],
+                grid[row][col + 2]
+              );
+            }
+          }
+        }
+
+        // Check columns for matches
+        for (let col = 0; col < gridSize.cols; col++) {
+          for (let row = 0; row < gridSize.rows - 2; row++) {
+            if (
+              grid[row][col].candyType === grid[row + 1][col].candyType &&
+              grid[row][col].candyType === grid[row + 2][col].candyType
+            ) {
+              matchedCandies.push(
+                grid[row][col],
+                grid[row + 1][col],
+                grid[row + 2][col]
+              );
+            }
+          }
+        }
+
+        // Remove matched candies
+        matchedCandies.forEach((candy) => {
+          candy.setTexture("candy" + Phaser.Math.Between(1, candyTypes));
+          candy.candyType = Phaser.Math.Between(1, candyTypes);
+        });
+      }
+
+      function update() {
+        // Game logic updates (animations, etc.)
+      }
+    </script>
+  </body>
+</html>
